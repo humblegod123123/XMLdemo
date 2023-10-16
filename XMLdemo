@@ -1,0 +1,166 @@
+ /*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.xmldemo.parser;
+
+import com.xmldemos.data.Address;
+import com.xmldemos.data.Customer;
+import com.xmldemos.data.ObjectPrinter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+/**
+ *
+ * @author acezh
+ */
+public class CustomerXMLDOMParser {
+
+    public static void main(String[] args) {
+        try {
+//mainfile
+            File file = new File("C:\\Users\\acezh\\Documents\\NetBeansProjects\\XMLDemo\\src\\com\\xml\\resources\\new-customers-no-namespace.xml");
+            //File file = new File("C:\\Users\\acezh\\Documents\\NetBeansProjects\\XMLDemo\\src\\com\\xml\\resources\\customer.xml");
+            FileInputStream fi = new FileInputStream(file);
+
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+
+            Document document = builder.parse(fi);
+
+            NodeList customerNodeList = document.getElementsByTagName("customer");
+            List<Customer> customerList = new ArrayList<>();
+
+            for (int customerIndex = 0; customerIndex < customerNodeList.getLength(); customerIndex++) {
+                Node currentCustomerNode = customerNodeList.item(customerIndex);
+                customerList.add(buildCustomerFromNode(currentCustomerNode));
+            }
+
+            for (Customer currentCustomer : customerList) {
+                ObjectPrinter.printCustomer(currentCustomer);
+
+            }
+
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            e.printStackTrace(System.err);
+        }
+    }
+
+    private static Customer buildCustomerFromNode(Node currentCustomerNode) {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+        Customer newCustomer = new Customer();
+
+        NamedNodeMap customerAttributeMap = currentCustomerNode.getAttributes();
+        Attr attr = (Attr) customerAttributeMap.getNamedItem("id");
+        String idValue = attr.getValue();
+        newCustomer.setId(Long.parseLong(idValue));
+
+        NodeList customerDataNodeList = currentCustomerNode.getChildNodes();
+
+        for (int dataIndex = 0; dataIndex < customerDataNodeList.getLength(); dataIndex++) {
+
+            Node dataNode = customerDataNodeList.item(dataIndex);
+            if (dataNode instanceof Element) {
+
+                Element dataElement = (Element) dataNode;
+                boolean noMatch = false;
+                switch (dataElement.getTagName()) {
+                    /*case "id":
+                        Long idValue = Long.parseLong(dataElement.getTextContent());
+                        newCustomer.setId(idValue);
+                        break;*/
+                    case "firstName":
+                        newCustomer.setFirstName(dataElement.getTextContent());
+                        break;
+                    case "lastName":
+                        newCustomer.setLastName(dataElement.getTextContent());
+                        break;
+                    case "email":
+                        newCustomer.setEmailAddress(dataElement.getTextContent());
+                        break;
+
+                    default:
+                        noMatch = true;
+                        break;
+                }
+
+                if (noMatch) {
+                    if ("addresses".equals(dataElement.getTagName())) {
+                        newCustomer.setAddresses(new ArrayList<>());
+
+                        NodeList addressNodeList = dataElement.getChildNodes();
+                        for (int addressIndex = 0; addressIndex < addressNodeList.getLength(); addressIndex++) {
+
+                            Node addressNode = addressNodeList.item(addressIndex);
+                            if (addressNode instanceof Element) {
+
+                                Element addressElement = (Element) addressNode;
+                                if ("address".equals(addressElement.getTagName())) {
+                                    newCustomer.getAddresses().add(buildAddressFromNode(addressElement));
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+        return newCustomer;
+    }
+
+    private static Location buildLocationFromNode(Element addressElement) {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+
+        Location location = new Location();
+        NodeList locationDataNodeList = locationElement.getChildNodes();
+
+        for (int locationDataIndex = 0; locationDataIndex < locationDataNodeList.getLength(); locationDataIndex++) {
+
+            Node dataNode = locationDataNodeList.item(locationDataIndex);
+            if (dataNode instanceof Element) {
+                Element dataElement = (Element) dataNode;
+
+                switch (dataElement.getTagName()) {
+                    case "type":
+                        location.setLocationType(dataElement.getTextContent());
+                        break;
+                    case "street":
+                        location.setStreet1(dataElement.getTextContent());
+                        break;
+                    case "city":
+                        location.setCity(dataElement.getTextContent());
+                        break;
+                    case "state":
+                        location.setState(dataElement.getTextContent());
+                        break;
+                    case "zip":
+                        location.setZip(dataElement.getTextContent());
+                        break;
+
+                }
+
+            }
+
+        }
+
+        return location;
+    }
+}
